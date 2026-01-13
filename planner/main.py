@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from routes.users import user_router
 from routes.events import event_router
+from fastapi.responses import RedirectResponse
 
 from database.connection import Settings
 import uvicorn
@@ -13,7 +14,7 @@ app = FastAPI()
 settings = Settings()
 
 # 출처 등록
-origins = ["*"]
+origins = ["http://localhost:5173"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

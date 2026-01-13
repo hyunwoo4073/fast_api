@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Vite 기본 템플릿이 화면을 가운데 정렬/다크배경으로 강제하는 걸 제거 */
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
