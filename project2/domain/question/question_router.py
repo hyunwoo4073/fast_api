@@ -1,0 +1,46 @@
+from fastapi import APIRouter, Depends # with 문을 사용하는 것보다 더 간단하게 사용가능, Depends는 매개변수로 전달받은 함수를 호출하여 그 결과를 리턴, 따라서 db: Session = Depends(get_db)의 db 객체에는 get_db 제너레이터 함수가 yield를 통해 생성한 세션 객체가 주입됨
+from sqlalchemy.orm import Session
+
+# from database import SessionLocal
+from database import get_db
+from domain.question import question_schema, question_crud
+from models import Question
+from starlette import status
+
+router = APIRouter(
+    prefix="/api/question",
+)
+
+@router.get("/list", response_model=question_schema.QuestionList)
+def question_list(db: Session = Depends(get_db),
+                  page: int = 0, size: int = 10):
+    # db = SessionLocal()
+    # _question_list = db.query(Question).order_by(Question.create_date.desc()).all()
+    # db.close()
+
+    # 오류 여부에 상관없이 with문을 벗어나는 순간 db.close()가 실행되므로 보다 안전한 코드로 변경
+    # with get_db() as db:
+    #     _question_list = db.query(Question).order_by(Question.create_date.desc()).all()
+
+    # get_db 함수를 with문과 함께 쓰는 대신에 question_list 함수의 매개변수로 db: Session = Depends(get_db) 객체를 주입받음
+    # _question_list = db.query(Question).order_by(Question.create_date.desc()).all()
+    
+    # crud 함수로 만들어 추가
+    # _question_list = question_crud.get_question_list(db)
+    # return _question_list
+    total, _question_list = question_crud.get_question_list(
+        db, skip=page*size, limit=size)
+    return {
+        'total': total,
+        'question_list': _question_list
+    }
+
+@router.get("/detail/{question_id}", response_model=question_schema.Question)
+def question_detail(question_id: int, db: Session = Depends(get_db)):
+    question = question_crud.get_question(db, question_id=question_id)
+    return question
+
+@router.post("/create", status_code=status.HTTP_204_NO_CONTENT)
+def question_create(_question_create: question_schema.QuestionCreate,
+                    db: Session = Depends(get_db)):
+    question_crud.create_question(db=db, question_create=_question_create)
