@@ -1,7 +1,10 @@
 <script>
     import fastapi from "../lib/api"
     import Error from "../components/Error.svelte"
-    import { push } from 'svelte-spa-router'
+    import { link, push } from 'svelte-spa-router'
+    import { is_login, username } from "../lib/store"
+    import moment from 'moment/min/moment-with-locales'
+    moment.locale('ko')
 
     export let params = {}
     let question_id = params.question_id
@@ -34,6 +37,23 @@
             }
         )
     }
+
+    function delete_question(_question_id) {
+        if(window.confirm('정말로 삭제하시겠습니까?')) {
+            let url = "/api/question/delete"
+            let params = {
+                question_id: _question_id
+            }
+            fastapi('delete', url, params,
+                (json) => {
+                    push('/')
+                },
+                (err_json) => {
+                    error = err_json
+                }
+            )
+        }
+    }
 </script>
 
 <div class="container my-3">
@@ -43,9 +63,18 @@
         <div class="card-body">
             <div class="card-text" style="white-space: pre-line;">{question.content}</div>
             <div class="d-flex justify-content-end">
-                <div class="badge bg-light text-dark p-2">
-                    {question.create_date}
+                <div class="badge bg-light text-dark p-2 text-start">
+                    <div class="mb-2">{question.user ? question.user.username : ""}</div>
+                    <div>{moment(question.create_date).format("YYYY년 MM월 DD일 hh:mm a")}</div>
                 </div>
+            </div>
+            <div class="my-3">
+                {#if question.user && $username === question.user.username }
+                <a use:link href="/question-modify/{question.id}"
+                    class="btn btn-sm btn-outline-secondary">수정</a>
+                <button class="btn btn-sm btn-outline-secondary"
+                    on:click={() => delete_question(question.id)}>삭제</button>
+                {/if}
             </div>
         </div>
     </div>
@@ -60,9 +89,16 @@
         <div class="card-body">
             <div class="card-text" style="white-space: pre-line;">{answer.content}</div>
             <div class="d-flex justify-content-end">
-                <div class="badge bg-light text-dark p-2">
-                    {answer.create_date}
+                <div class="badge bg-light text-dark p-2 text-start">
+                    <div class="mb-2">{answer.user ? answer.user.username : ""}</div>
+                    <div>{moment(answer.create_date).format("YYYY년 MM월 DD일 hh:mm a")}</div>
                 </div>
+            </div>
+            <div class="my-3">
+                {#if answer.user && $username === answer.user.username }
+                <a use:link href="/answer-modify/{answer.id}"
+                    class="btn btn-sm btn-outline-secondary">수정</a>
+                {/if}
             </div>
         </div>
     </div>
@@ -71,8 +107,11 @@
     <Error error={error} />
     <form method="post" class="my-3">
         <div class="mb-3">
-            <textarea rows="10" bind:value={content} class="form-control"></textarea>
+            <textarea rows="10" bind:value={content} 
+            disabled={$is_login ? "" : "disabled"}
+            class="form-control"></textarea>
         </div>
-        <input type="submit" value="답변등록" class="btn btn-primary" on:click="{post_answer}"/>
+        <input type="submit" value="답변등록" class="btn btn-primary {$is_login ? '' : 'disabled'}" 
+        on:click="{post_answer}"/>
     </form>
 </div>
