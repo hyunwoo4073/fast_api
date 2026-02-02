@@ -18,7 +18,7 @@
     function update_answer(event) {
         event.preventDefault()
         let url = "/api/answer/update"
-        let parmas = {
+        let params = {
             answer_id: answer_id,
             content: content,
         }
